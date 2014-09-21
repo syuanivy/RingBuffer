@@ -1,9 +1,10 @@
 package cs601.blkqueue;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class RingBuffer<T> implements MessageQueue<T> {
-	// must be volatile as reader/writer threads share w, r
-	private volatile long w = -1L;		// just wrote location
-	private volatile long r = 0L;		// about to read location
+	private final AtomicLong w = new AtomicLong(-1);	// just wrote location
+	private final AtomicLong r = new AtomicLong(0);		// about to read location
 
 	public RingBuffer(int n) {
 	}
