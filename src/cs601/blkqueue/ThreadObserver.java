@@ -30,7 +30,7 @@ class ThreadObserver implements Runnable {
 		while(!end){
 			numEvents++;
 			switch (threadToMonitor.getState()){
- 			    case BLOCKED: blocked++; break;
+ 			    case BLOCKED: blocked++; break;  // counting each state
 			    case WAITING: waiting++; break;
 			    case TIMED_WAITING: sleeping++; break; 
 			}
@@ -40,7 +40,7 @@ class ThreadObserver implements Runnable {
 				String key = first.getMethodName() + "." + first.getClassName();
 				if (histogram.containsKey(key)){
 					long value = histogram.get(key);
-					histogram.put(key, ++value);
+					histogram.put(key, ++value);    // get key-value pairs
 				}else{
 					histogram.put(key, (long)1);
 				}
