@@ -2,6 +2,7 @@ package cs601.blkqueue;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.LockSupport;
 
 /** A runnable class that attaches to another thread and wakes up
  *  at regular intervals to determine that thread's state. The goal
@@ -14,17 +15,47 @@ class ThreadObserver implements Runnable {
 	protected int blocked = 0;
 	protected int waiting = 0;
 	protected int sleeping = 0;
+	
+	protected Thread threadToMonitor; 
+	protected boolean end = false;
+	public static long frequency; //sampling frequency, in nano seconds
 
 	public ThreadObserver(Thread threadToMonitor, long periodInNanoSeconds) {
+		this.threadToMonitor = threadToMonitor;
+	    frequency = periodInNanoSeconds;
 	}
 
 	@Override
 	public void run() {
+		while(!end){
+			numEvents++;
+			switch (threadToMonitor.getState()){
+ 			    case BLOCKED: blocked++; break;
+			    case WAITING: waiting++; break;
+			    case TIMED_WAITING: sleeping++; break; 
+			}
+			StackTraceElement stackTrace[] = threadToMonitor.getStackTrace();
+			if(stackTrace.length > 0){
+				StackTraceElement  first = stackTrace[0];
+				String key = first.getMethodName() + "." + first.getClassName();
+				if (histogram.containsKey(key)){
+					long value = histogram.get(key);
+					histogram.put(key, ++value);
+				}else{
+					histogram.put(key, (long)1);
+				}
+			}
+			LockSupport.parkNanos(frequency);
+		}
 	}
 
-	public Map<String, Long> getMethodSamples() { return histogram; }
+	public Map<String, Long> getMethodSamples() { 
+		return histogram; 
+	}
 
-	public void terminate() { /* ... */ }
+	public void terminate() { 
+		end = true;
+	}
 
 	public String toString() {
 		return String.format("(%d blocked + %d waiting + %d sleeping) / %d samples = %1.2f%% wasted",
