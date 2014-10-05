@@ -30,9 +30,9 @@ class ThreadObserver implements Runnable {
 		while(!end){
 			numEvents++;
 			switch (threadToMonitor.getState()){
- 			    case BLOCKED: blocked++; break;
+ 			    case BLOCKED: blocked++; break; //count each state
 			    case WAITING: waiting++; break;
-			    case TIMED_WAITING: sleeping++; break; 
+			    case TIMED_WAITING: sleeping++; break; //parking is timed-waiting
 			}
 			StackTraceElement stackTrace[] = threadToMonitor.getStackTrace();
 			if(stackTrace.length > 0){
@@ -40,8 +40,8 @@ class ThreadObserver implements Runnable {
 				String key = first.getMethodName() + "." + first.getClassName();
 				if (histogram.containsKey(key)){
 					long value = histogram.get(key);
-					histogram.put(key, ++value);
-				}else{http://www.uml-diagrams.org/examples/java-6-thread-state-machine-diagram-example.html
+					histogram.put(key, ++value);   // put key-value pairs
+				}else{
 					histogram.put(key, (long)1);
 				}
 			}
