@@ -1,8 +1,7 @@
 package cs601.blkqueue;
 
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicLong;
-
+import java.util.concurrent.locks.LockSupport;
 
 public class RingBuffer<T> implements MessageQueue<T>{
 	private final AtomicLong w = new AtomicLong(-1);	// just wrote location
@@ -29,39 +28,30 @@ public class RingBuffer<T> implements MessageQueue<T>{
 
 	@Override
 	public void put(T v) throws InterruptedException {
-		while(true){
-			while( w.get()-r.get() == size-1 ) { // a full buffer, wait for space to write
-				waitForFreeSlotAt(w.get());
-			}
-			w.set((w.get()+1));   // when space available, increment w, absolute index
-			array[w.intValue() & (size-1)] = v;  // n%k = n&(k-1)
-			notifyAll();
-		}
+		waitForFreeSlotAt(w.get());
+		array[(w.intValue()+1) & (size-1)] = v;  // n%k = n&(k-1)
+		w.set((w.get()+1));   // increment w, absolute index
 	}
 
 	@Override
 	public T take() throws InterruptedException {
-			T temp;
-			while(true){
-				while(r.get()>w.get()){   //nothing to read, wait for data
-					waitForDataAt(r.get());
-				}					
-				temp = array[r.intValue() & (size-1)];  // when data available
-				array[r.intValue() & (size-1)] = null;   //consume data
-				r.set(r.get()+1);   //increment r
-				notifyAll();
-				break;
-			}
-			return temp;
+		waitForDataAt(r.get());					
+		T temp = array[r.intValue() & (size-1)];  // when data available
+		r.set(r.get()+1);   //increment r
+		return temp;
 	}
 
 	// spin wait instead of lock for low latency store
 	void waitForFreeSlotAt(final long writeIndex) throws InterruptedException{
-		wait();
+		while( writeIndex-r.get() >= size-1 ) { // a full buffer, wait for space to write
+			LockSupport.parkNanos(1);			
+		}
 	}
 
 	// spin wait instead of lock for low latency pickup
 	void waitForDataAt(final long readIndex) throws InterruptedException{
-		wait();
+		while(readIndex>w.get()){   //nothing to read, wait for data
+			LockSupport.parkNanos(1);			
+		}
 	}
 }
