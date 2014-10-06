@@ -17,7 +17,7 @@ class ThreadObserver implements Runnable {
 	protected int sleeping = 0;
 	
 	protected Thread threadToMonitor; 
-	protected boolean end = false;
+	protected boolean monitor = true;
 	public static long frequency; //sampling frequency, in nano seconds
 
 	public ThreadObserver(Thread threadToMonitor, long periodInNanoSeconds) {
@@ -27,7 +27,7 @@ class ThreadObserver implements Runnable {
 
 	@Override
 	public void run() {
-		while(!end){
+		while(monitor){
 			numEvents++;
 			switch (threadToMonitor.getState()){
  			    case BLOCKED: blocked++; break; //count each state
@@ -54,7 +54,7 @@ class ThreadObserver implements Runnable {
 	}
 
 	public void terminate() { 
-		end = true;
+		monitor = false;
 	}
 
 	public String toString() {

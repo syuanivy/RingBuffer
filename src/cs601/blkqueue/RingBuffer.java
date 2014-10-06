@@ -2,6 +2,7 @@ package cs601.blkqueue;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
+import java.lang.*;
 
 public class RingBuffer<T> implements MessageQueue<T>{
 	private final AtomicLong w = new AtomicLong(-1);	// just wrote location
@@ -44,14 +45,16 @@ public class RingBuffer<T> implements MessageQueue<T>{
 	// spin wait instead of lock for low latency store
 	void waitForFreeSlotAt(final long writeIndex) throws InterruptedException{
 		while( writeIndex-r.get() >= size-1 ) { // a full buffer, wait for space to write
-			LockSupport.parkNanos(1);			
+			//LockSupport.parkNanos(1);		
+			Thread.yield();
 		}
 	}
 
 	// spin wait instead of lock for low latency pickup
 	void waitForDataAt(final long readIndex) throws InterruptedException{
 		while(readIndex>w.get()){   //nothing to read, wait for data
-			LockSupport.parkNanos(1);			
+			//LockSupport.parkNanos(1);		
+			Thread.yield();
 		}
 	}
 }
